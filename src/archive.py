@@ -6,11 +6,9 @@ from O365.message import Message
 from O365.mailbox import MailBox
 import config
 
-
 #client_secret = '8YWEDMKed/Qb@@EPxKT_D7v4LzzLKbK0'
 #client_id = '3459265f-d17d-47bd-80c7-3507c243ff64'
 #tenant_id = 'f8cdef31-a31e-4b4a-93e4-5f571e91255a'
-
 
 client_secret = config.client_secret
 client_id = config.client_id
@@ -24,7 +22,6 @@ account = Account(credentials)
 #    print("authenticated successfully")
 # -------------------------------------------------------------------
 
-
 # For single user accounts, I think this is the way to authenticate for a corporate account.
 # ______________________________________________________________________________
 #account = Account(credentials, auth_flow_type='credentials', tenant_id=tenant_id)
@@ -32,7 +29,6 @@ account = Account(credentials)
 #if account.authenticate(scope=['basic']):
 #    print('Authentication Complete!')
 # _______________________________________________________________________________
-
 
 mailbox = account.mailbox(resource='zachgilliom@outlook.com')
 
@@ -46,3 +42,4 @@ m = mailbox.new_message()
 m.to.add('zacharygilliom@gmail.com')
 m.body = 'Hey There'
 m.send()
+
