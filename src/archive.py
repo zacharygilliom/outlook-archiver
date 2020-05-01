@@ -88,3 +88,5 @@ if __name__ == '__main__':
     destination_directory = emailDestinationDirectory(dir_path)
 
     destination_directory.createDirectory(inbox_messages[0].getReceived())
+
+    # TODO: Go through all the messages and create a file in the appropriate month subdirectory.
