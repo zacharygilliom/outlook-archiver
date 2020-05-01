@@ -32,7 +32,21 @@ class emailDestinationDirectory:
     def ldir(self):
         return os.listdir(self.emailDirectory)
 
+    def checkDirectory(self, emailDate):
+        if self.ldir():
+            for folder in self.ldir():
+                if folder == emailDate['month']:
+                    return False
+                elif folder != emailDate['month']:
+                    return True
+                    os.mkdir(os.path.join(self.emailDirectory, emailDate))
+        elif not self.ldir():
+            return True 
 
+    def createDirectory(self, emailDate):
+        if self.checkDirectory(emailDate):
+            os.mkdir(os.path.join(self.emailDirectory, emailDate['month']))
+  
 
 def getMessages(inbox):
     messages = []
@@ -69,6 +83,5 @@ for m in inbox_messages:
 
 destination_directory = emailDestinationDirectory(dir_path)
 
-print(destination_directory.ldir())
-
-print(os.listdir(dir_path))
+print(destination_directory.checkDirectory(inbox_messages[0].getReceived()))
+destination_directory.createDirectory(inbox_messages[0].getReceived())
