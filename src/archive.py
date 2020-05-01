@@ -46,7 +46,11 @@ class emailDestinationDirectory:
     def createDirectory(self, emailDate):
         if self.checkDirectory(emailDate):
             os.mkdir(os.path.join(self.emailDirectory, emailDate['month']))
-  
+            return f"The {emailDate['month']} was created Successfully"
+        else:
+            print(f"The {emailDate['month']} Directory already exists!")
+            return False
+
 
 def getMessages(inbox):
     messages = []
@@ -69,19 +73,18 @@ def getMessages(inbox):
 #if account.authenticate(scope=['basic']):
 #    print('Authentication Complete!')
 # _______________________________________________________________________________
+if __name__ == '__main__':
+    mailbox = account.mailbox(resource='zachgilliom@outlook.com')
+    dir_path = '/home/zacharygilliom/Documents/email-folder/'
 
-mailbox = account.mailbox(resource='zachgilliom@outlook.com')
-dir_path = '/home/zacharygilliom/Documents/email-folder/'
+    inbox = mailbox.inbox_folder()
 
-inbox = mailbox.inbox_folder()
+    inbox_messages = getMessages(inbox=inbox)
 
-inbox_messages = getMessages(inbox=inbox)
+#    for m in inbox_messages:
+#        print(m.getTitle())
+#        print(m.getReceived())
+#
+    destination_directory = emailDestinationDirectory(dir_path)
 
-for m in inbox_messages:
-    print(m.getTitle())
-    print(m.getReceived())
-
-destination_directory = emailDestinationDirectory(dir_path)
-
-print(destination_directory.checkDirectory(inbox_messages[0].getReceived()))
-destination_directory.createDirectory(inbox_messages[0].getReceived())
+    destination_directory.createDirectory(inbox_messages[0].getReceived())
