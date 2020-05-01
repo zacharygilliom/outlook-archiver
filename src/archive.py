@@ -6,15 +6,32 @@ from O365.message import Message
 from O365.mailbox import MailBox
 import config
 
-#client_secret = '8YWEDMKed/Qb@@EPxKT_D7v4LzzLKbK0'
-#client_id = '3459265f-d17d-47bd-80c7-3507c243ff64'
-#tenant_id = 'f8cdef31-a31e-4b4a-93e4-5f571e91255a'
-
 client_secret = config.client_secret
 client_id = config.client_id
 tenant_id = config.tenant_id
 credentials = (client_id, client_secret)
 account = Account(credentials)
+
+class email:
+
+    def __init__(self, title, received):
+        self.title = title
+        self.received = received
+
+    def getTitle(self):
+        return self.title
+    
+    def getReceived(self):
+        date_received = self.received.strftime("%x")
+        month_received = self.received.strftime("%B")
+        return {'date': date_received, 'month': month_received}
+
+def getMessages(inbox):
+    messages = []
+    for message in inbox.get_messages():
+        m = email(title=message.subject, received=message.received)
+        messages.append(m)
+    return messages
 
 # When authentication runs out, uncomment the below three lines to re-authenticate.
 # -------------------------------------------------------------------
@@ -34,12 +51,12 @@ mailbox = account.mailbox(resource='zachgilliom@outlook.com')
 
 inbox = mailbox.inbox_folder()
 
-for messages in inbox.get_messages():
-    print(messages)
+inbox_messages = getMessages(inbox=inbox)
 
+for m in inbox_messages:
+    print(m.getTitle())
+    print(m.getReceived())
 
-m = mailbox.new_message()
-m.to.add('zacharygilliom@gmail.com')
-m.body = 'Hey There'
-m.send()
+dir_path = '/home/zacharygilliom/Documents/email-folder/'
+
 
