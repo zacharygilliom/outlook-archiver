@@ -1,6 +1,4 @@
 import os
-import requests
-import msal
 from O365 import Account
 from O365.message import Message
 from O365.mailbox import MailBox
@@ -26,12 +24,23 @@ class email:
         month_received = self.received.strftime("%B")
         return {'date': date_received, 'month': month_received}
 
+class emailDestinationDirectory:
+
+    def __init__(self, emailDirectory):
+        self.emailDirectory = emailDirectory
+
+    def ldir(self):
+        return os.listdir(self.emailDirectory)
+
+
+
 def getMessages(inbox):
     messages = []
     for message in inbox.get_messages():
         m = email(title=message.subject, received=message.received)
         messages.append(m)
     return messages
+
 
 # When authentication runs out, uncomment the below three lines to re-authenticate.
 # -------------------------------------------------------------------
@@ -48,6 +57,7 @@ def getMessages(inbox):
 # _______________________________________________________________________________
 
 mailbox = account.mailbox(resource='zachgilliom@outlook.com')
+dir_path = '/home/zacharygilliom/Documents/email-folder/'
 
 inbox = mailbox.inbox_folder()
 
@@ -57,6 +67,8 @@ for m in inbox_messages:
     print(m.getTitle())
     print(m.getReceived())
 
-dir_path = '/home/zacharygilliom/Documents/email-folder/'
+destination_directory = emailDestinationDirectory(dir_path)
 
+print(destination_directory.ldir())
 
+print(os.listdir(dir_path))
