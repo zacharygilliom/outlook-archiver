@@ -1,33 +1,9 @@
 import os
-from O365 import Account
-from O365.message import Message
-from O365.mailbox import MailBox
-import config
 from pathlib import Path
-
-client_secret = config.client_secret
-client_id = config.client_id
-tenant_id = config.tenant_id
-credentials = (client_id, client_secret)
-account = Account(credentials)
-
-class email:
-
-    def __init__(self, title, received, path):
-        self.title = title
-        self.received = received
-        self.path = path
-
-    def getTitle(self):
-        return self.title
-    
-    def getReceived(self):
-        date_received = self.received.strftime("%x")
-        month_received = self.received.strftime("%B")
-        return {'date': date_received, 'month': month_received}
-
-    def getPath(self):
-        return self.path
+import pickle
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 class emailDestinationDirectory:
 
@@ -57,45 +33,36 @@ class emailDestinationDirectory:
             print(f"The {emailDate['month']} Directory already exists!")
             return False
 
+SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
-def getMessages(inbox, folder_path):
-    messages = []
-    for message in inbox.get_messages():
-        # TODO: Need to fix the path where the file is saved.  I think this should be a method in the email class.
-        emailfilepath = message.save_as_eml(to_path=Path(os.path.join(folder_path, f'{message.subject}.eml')))
-        m = email(title=message.subject, received=message.received, path=emailfilepath)
-        messages.append(m)
-    return messages
+def main():
+    creds = None
 
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
 
-# When authentication runs out, uncomment the below three lines to re-authenticate.
-# -------------------------------------------------------------------
-#if account.authenticate(scopes=['basic', 'mailbox', 'message_all']):
-#    print("authenticated successfully")
-# -------------------------------------------------------------------
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
 
-# For single user accounts, I think this is the way to authenticate for a corporate account.
-# ______________________________________________________________________________
-#account = Account(credentials, auth_flow_type='credentials', tenant_id=tenant_id)
-#
-#if account.authenticate(scope=['basic']):
-#    print('Authentication Complete!')
-# _______________________________________________________________________________
+    service = build('gmail', 'v1', credentials = creds)
+
+    results = service.users().messages().get(userId='me',id='171c8162074b5cc8').execute()
+    # messages = results.get('messages', [])
+
+    if not results:
+        print('No messages found')
+    else:
+        print('messages')
+        print(results['snippet'])
 if __name__ == '__main__':
-    mailbox = account.mailbox(resource='zachgilliom@outlook.com')
-    dir_path = '/home/zacharygilliom/Documents/email-folder/'
+    main()
 
-    inbox = mailbox.inbox_folder()
-    
-    inbox_messages = getMessages(inbox=inbox, folder_path=dir_path)
 
-    for m in inbox_messages:
-        print(m.getTitle())
-        print(m.getReceived())
-        print(m.getPath())
-
-    destination_directory = emailDestinationDirectory(dir_path)
-
-    destination_directory.createDirectory(inbox_messages[0].getReceived())
-
-    # TODO: Go through all the messages and create a file in the appropriate month subdirectory.
