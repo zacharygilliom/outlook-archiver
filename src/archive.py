@@ -41,12 +41,20 @@ def getMessagesList(creds):
     response = service.users().messages().list(userId='me').execute()
     
     messages = response['messages']
-    message_id = []
+    message_ids = []
     for message in messages:
-        message_id.append(message['id'])
-    
-    return message_id
-   
+        message_ids.append(message['id'])
+    print(message_ids) 
+    return message_ids
+
+def getMessages(msg_ids, creds):
+    msg_snippets = {}
+    for msg_id in msg_ids:
+        service = build('gmail', 'v1', credentials=creds)
+        response = service.users().messages().get(userId='me', id=msg_id, format='metadata', metadataHeaders=['id', 'From', 'snippet']).execute()
+        msg_snippets[response['id']] = response['payload']['headers'][0]['value']
+    return msg_snippets 
+
 def getAuthorization(scope):
 
     creds = None
@@ -68,7 +76,8 @@ def getAuthorization(scope):
 
 def main():
     creds = getAuthorization(scope=SCOPES)
-    print(getMessagesList(creds))
+    msg_ids = getMessagesList(creds)
+    print(getMessages(msg_ids, creds))
 
 if __name__ == '__main__':
     main()
