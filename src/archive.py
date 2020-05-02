@@ -35,7 +35,20 @@ class emailDestinationDirectory:
 
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
-def main():
+def getMessagesList(creds):
+
+    service = build('gmail', 'v1', credentials=creds)
+    response = service.users().messages().list(userId='me').execute()
+    
+    messages = response['messages']
+    message_id = []
+    for message in messages:
+        message_id.append(message['id'])
+    
+    return message_id
+   
+def getAuthorization(scope):
+
     creds = None
 
     if os.path.exists('token.pickle'):
@@ -46,23 +59,17 @@ def main():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
+                    'credentials.json', scope)
             creds = flow.run_local_server(port=0)
 
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
+    return creds
 
-    service = build('gmail', 'v1', credentials = creds)
+def main():
+    creds = getAuthorization(scope=SCOPES)
+    print(getMessagesList(creds))
 
-    results = service.users().messages().get(userId='me',id='171c8162074b5cc8').execute()
-    # messages = results.get('messages', [])
-
-    if not results:
-        print('No messages found')
-    else:
-        print('messages')
-        print(results['snippet'])
 if __name__ == '__main__':
     main()
-
 
