@@ -85,8 +85,9 @@ def main():
     creds = getAuthorization(scope=SCOPES)
     msg_ids = getMessagesList(creds)
     getMessages(msg_ids, creds)
-    # print(getMessages(msg_ids, creds))
 
 if __name__ == '__main__':
     main()
+# TODO: Added functino to parse the base 64 encoded body email.
+# TODO: Added function to check for the sender of the email to check for indeed.com so we can parse through the body of the email and find the job listings.
 
