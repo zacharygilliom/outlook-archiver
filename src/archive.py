@@ -4,6 +4,7 @@ import pickle
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import base64
 
 class emailDestinationDirectory:
 
@@ -51,8 +52,14 @@ def getMessages(msg_ids, creds):
     msg_snippets = {}
     for msg_id in msg_ids:
         service = build('gmail', 'v1', credentials=creds)
-        response = service.users().messages().get(userId='me', id=msg_id, format='metadata', metadataHeaders=['id', 'From', 'snippet']).execute()
-        msg_snippets[response['id']] = response['payload']['headers'][0]['value']
+        response = service.users().messages().get(userId='me', id=msg_id).execute()
+        # response = service.users().messages().get(userId='me', id=msg_id, format='metadata', metadataHeaders=['id', 'From', 'snippet', 'body']).execute()
+        # msg_snippets[response['id']] = [response['payload']['headers'][0]['value'], response['payload']['headers'][1]['value']]
+        # print(response['payload']['body']['data'], '\n')
+        try: 
+            print(response['payload']['body']['data'], '\n')
+        except:
+            print('No body data found')
     return msg_snippets 
 
 def getAuthorization(scope):
@@ -77,7 +84,8 @@ def getAuthorization(scope):
 def main():
     creds = getAuthorization(scope=SCOPES)
     msg_ids = getMessagesList(creds)
-    print(getMessages(msg_ids, creds))
+    getMessages(msg_ids, creds)
+    # print(getMessages(msg_ids, creds))
 
 if __name__ == '__main__':
     main()
