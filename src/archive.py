@@ -34,6 +34,17 @@ class emailDestinationDirectory:
             print(f"The {emailDate['month']} Directory already exists!")
             return False
 
+class emailMessage:
+
+    def __init__(self, email_id, email_from, email_body):
+        self.email_from = email_from
+        self.email_body = email_body
+        self.email_id = email_id
+
+    def decodeEmailBody(self):
+        return None
+
+
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
 def getMessagesList(creds):
@@ -45,7 +56,7 @@ def getMessagesList(creds):
     message_ids = []
     for message in messages:
         message_ids.append(message['id'])
-    print(message_ids) 
+    # print(message_ids) 
     return message_ids
 
 def getMessages(msg_ids, creds):
@@ -53,13 +64,20 @@ def getMessages(msg_ids, creds):
     for msg_id in msg_ids:
         service = build('gmail', 'v1', credentials=creds)
         response = service.users().messages().get(userId='me', id=msg_id).execute()
-        # response = service.users().messages().get(userId='me', id=msg_id, format='metadata', metadataHeaders=['id', 'From', 'snippet', 'body']).execute()
-        # msg_snippets[response['id']] = [response['payload']['headers'][0]['value'], response['payload']['headers'][1]['value']]
-        # print(response['payload']['body']['data'], '\n')
-        try: 
-            print(response['payload']['body']['data'], '\n')
+        # print(response)  
+        for val in response['payload']['headers']:
+            if val['name'] == 'From':
+                email_from = val['value']
+            else:
+                pass
+        email_id = response['id']  
+        try:
+            email_body = response['payload']['body']['data']
         except:
-            print('No body data found')
+            email_body = None
+        if 'Indeed' in email_from:
+            email = emailMessage(email_id, email_from, email_body)
+            print(email.email_id)
     return msg_snippets 
 
 def getAuthorization(scope):
