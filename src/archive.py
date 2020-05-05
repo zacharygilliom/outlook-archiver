@@ -42,7 +42,12 @@ class emailMessage:
         self.email_id = email_id
 
     def decodeEmailBody(self):
-        return None
+        # TODO: Fix the encodig part... Email_body has too many characters to decode
+        base64_message = self.email_body
+        # base64_bytes = base64_message.encode('utf-8')
+        message_bytes = base64.b64decode(base64_message)
+        message = message_bytes.decode('utf-8')
+        return message
 
 
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
@@ -56,15 +61,13 @@ def getMessagesList(creds):
     message_ids = []
     for message in messages:
         message_ids.append(message['id'])
-    # print(message_ids) 
     return message_ids
 
 def getMessages(msg_ids, creds):
-    msg_snippets = {}
+    messages = []
     for msg_id in msg_ids:
         service = build('gmail', 'v1', credentials=creds)
         response = service.users().messages().get(userId='me', id=msg_id).execute()
-        # print(response)  
         for val in response['payload']['headers']:
             if val['name'] == 'From':
                 email_from = val['value']
@@ -72,13 +75,13 @@ def getMessages(msg_ids, creds):
                 pass
         email_id = response['id']  
         try:
-            email_body = response['payload']['body']['data']
+            email_body = response['payload']['parts'][0]['body']['data']
         except:
             email_body = None
         if 'Indeed' in email_from:
             email = emailMessage(email_id, email_from, email_body)
-            print(email.email_id)
-    return msg_snippets 
+            messages.append(email)
+    return messages
 
 def getAuthorization(scope):
 
@@ -102,10 +105,15 @@ def getAuthorization(scope):
 def main():
     creds = getAuthorization(scope=SCOPES)
     msg_ids = getMessagesList(creds)
-    getMessages(msg_ids, creds)
+    email_messages = getMessages(msg_ids, creds)
+    print(email_messages[0].decodeEmailBody())
 
 if __name__ == '__main__':
     main()
-# TODO: Added functino to parse the base 64 encoded body email.
-# TODO: Added function to check for the sender of the email to check for indeed.com so we can parse through the body of the email and find the job listings.
+
+# TODO: Need to fix decoder method.
+# TODO: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
+# TODO: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
+# postings
+# TODO: Create a function to send a text message alert to my phone notifying me of the specific jobs to apply to.
 
