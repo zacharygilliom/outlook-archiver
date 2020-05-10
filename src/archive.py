@@ -32,7 +32,11 @@ class emailMessage:
     def getUrlText(self):
         url = self.getWebsiteUrl()
         r = requests.get(url)
-        print(r.text)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        print(soup.get_text())
+        # for link in soup.find_all('br'):
+        #     print(link)
+        # print(r.text)
 
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
