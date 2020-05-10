@@ -5,34 +5,9 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import base64
-
-class emailDestinationDirectory:
-
-    def __init__(self, emailDirectory):
-        self.emailDirectory = emailDirectory
-
-    def ldir(self):
-        return os.listdir(self.emailDirectory)
-
-    def checkDirectory(self, emailDate):
-        if self.ldir():
-            for folder in self.ldir():
-                if folder == emailDate['month']:
-                    return False
-                elif folder != emailDate['month']:
-                    return True
-                    os.mkdir(os.path.join(self.emailDirectory, emailDate))
-        elif not self.ldir():
-            return True 
-
-    def createDirectory(self, emailDate):
-        if self.checkDirectory(emailDate):
-            os.mkdir(os.path.join(self.emailDirectory, emailDate['month']))
-            # TODO: For some reason this errors out now that the April directory is already created, 
-            return f"The {emailDate['month']} was created Successfully"
-        else:
-            print(f"The {emailDate['month']} Directory already exists!")
-            return False
+import re
+from bs4 import BeautifulSoup
+import requests
 
 class emailMessage:
 
@@ -49,6 +24,15 @@ class emailMessage:
         message = message_bytes.decode('utf-8')
         return message
 
+    def getWebsiteUrl(self):
+        message = self.decodeEmailBody()
+        url = re.findall("(?P<url>https://[^\s]+)", message)
+        return url[1]
+
+    def getUrlText(self):
+        url = self.getWebsiteUrl()
+        r = requests.get(url)
+        print(r.text)
 
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
@@ -106,7 +90,9 @@ def main():
     creds = getAuthorization(scope=SCOPES)
     msg_ids = getMessagesList(creds)
     email_messages = getMessages(msg_ids, creds)
-    print(email_messages[0].decodeEmailBody())
+    # print(email_messages[0].decodeEmailBody())
+    print(email_messages[0].getWebsiteUrl())
+    email_messages[0].getUrlText()
 
 if __name__ == '__main__':
     main()
