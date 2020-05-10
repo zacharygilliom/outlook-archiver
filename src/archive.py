@@ -19,9 +19,10 @@ class emailMessage:
     def decodeEmailBody(self):
         # TODO: Fix the encodig part... Email_body has too many characters to decode
         base64_message = self.email_body
+        print(base64_message)
         # base64_bytes = base64_message.encode('utf-8')
         message_bytes = base64.b64decode(base64_message)
-        message = message_bytes.decode('utf-8')
+        message = message_bytes.decode('UTF-8')
         return message
 
     def getWebsiteUrl(self):
@@ -33,10 +34,29 @@ class emailMessage:
         url = self.getWebsiteUrl()
         r = requests.get(url)
         soup = BeautifulSoup(r.text, 'html.parser')
-        print(soup.get_text())
-        # for link in soup.find_all('br'):
-        #     print(link)
-        # print(r.text)
+        url_text = soup.get_text()
+        return url_text
+
+    def getTitle(self):
+        url = self.getWebsiteUrl()
+        r = requests.get(url)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        self.title = soup.find('title')
+        return self.title
+
+    def parseText(self):
+        text = self.getUrlText()
+        title = self.getTitle()
+        keywords = ['python', 'Python', 'Mathematics', 'Bachelor', 'entry level', 'entry-level', 'beginner']
+        found_keywords = []
+        for keyword in keywords:
+            if keyword in text:
+                found_keywords.append(keyword)
+        email_dict = {"Title": title, "keywords":found_keywords}
+        if email_dict['keywords']:
+            return email_dict
+        else:
+            return None
 
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
@@ -95,8 +115,11 @@ def main():
     msg_ids = getMessagesList(creds)
     email_messages = getMessages(msg_ids, creds)
     # print(email_messages[0].decodeEmailBody())
-    print(email_messages[0].getWebsiteUrl())
-    email_messages[0].getUrlText()
+    # email_messages[0].getWebsiteUrl())
+    # email_messages[0].getUrlText()
+    # for mess in email_messages:
+        # print(mess.parseText())
+    email_messages[4].parseText()
 
 if __name__ == '__main__':
     main()
