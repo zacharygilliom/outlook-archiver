@@ -125,8 +125,8 @@ if __name__ == '__main__':
     main()
 
 # TODO: Need to fix decoder method.
-# TODO: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
-# TODO: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
+# Done: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
+# Done: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
 # postings
 # TODO: Create a function to send a text message alert to my phone notifying me of the specific jobs to apply to.
 
