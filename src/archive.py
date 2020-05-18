@@ -17,12 +17,19 @@ class emailMessage:
         self.email_id = email_id
 
     def decodeEmailBody(self):
-        # TODO: Fix the encodig part... Email_body has too many characters to decode
+        # TODO: Fix the encoding part... Email_body has too many characters to decode
         base64_message = self.email_body
-        print(base64_message)
-        # base64_bytes = base64_message.encode('utf-8')
+        print(f'Base64 Message \n{base64_message}')
+        print('Length: ' + str(len(base64_message)))
+        # base64_bytes = base64_message.encode('ascii')
+        # print(f'Base64_bytes \n{base64_bytes}')
+        base64_message += '==='
         message_bytes = base64.b64decode(base64_message)
-        message = message_bytes.decode('UTF-8')
+        # print(f'Message_bytes \n{message_bytes}')
+        # message = message_bytes.decodebytes('ascii')
+        # print(f'decoded Message \n{message_bytes}')
+        # print(message_bytes)
+        message = message_bytes.decode('utf-8') 
         return message
 
     def getWebsiteUrl(self):
@@ -76,6 +83,7 @@ def getMessages(msg_ids, creds):
     for msg_id in msg_ids:
         service = build('gmail', 'v1', credentials=creds)
         response = service.users().messages().get(userId='me', id=msg_id).execute()
+        print(response)
         for val in response['payload']['headers']:
             if val['name'] == 'From':
                 email_from = val['value']
@@ -84,6 +92,7 @@ def getMessages(msg_ids, creds):
         email_id = response['id']  
         try:
             email_body = response['payload']['parts'][0]['body']['data']
+            # print(email_body)
         except:
             email_body = None
         if 'Indeed' in email_from:
@@ -119,7 +128,7 @@ def main():
     # email_messages[0].getUrlText()
     # for mess in email_messages:
         # print(mess.parseText())
-    email_messages[4].parseText()
+    # email_messages[4].parseText()
 
 if __name__ == '__main__':
     main()
