@@ -9,13 +9,24 @@ import re
 from bs4 import BeautifulSoup
 import requests
 
+# A quick overview of how the code works.  
+# We connect to our Gmail API and fetch all the email IDS.  We need the email IDS because we need to then pass this to the GMAIL API so we can read the emails.  Once we can read the 
+# emails, we will parse the text to find the emails from Indeed.com because these will have the job postings that we want to look at.  The job postings include the URL from which the 
+# job desciption resides. From here, we use Beatiful soup to parse the website and look in the job description to find keywords that we want.
+#TODO - Need to fix the email decoder as the base64 message is always off by a digit.
+#TODO - Once we find the job postings we want to look at, we need to send a text to me of the job.
+
 class emailMessage:
+
+''' A class for the email messages to obtain specific pieces of the emails'''
 
     def __init__(self, email_id, email_from, email_body):
         self.email_from = email_from
         self.email_body = email_body
         self.email_id = email_id
 
+    # Problem with the decode.  Need to fix this.
+    # This will read the email body which arrives in base64 and will decode it to something we can read so we can parse it.
     def decodeEmailBody(self):
         # TODO: Fix the encoding part... Email_body has too many characters to decode
         base64_message = self.email_body
@@ -32,11 +43,13 @@ class emailMessage:
         message = message_bytes.decode('utf-8') 
         return message
 
+    # Parse the body of the email and grab the URL from the job description.  We will use the job URL and beautifulsoup to parse the webpage.
     def getWebsiteUrl(self):
         message = self.decodeEmailBody()
         url = re.findall("(?P<url>https://[^\s]+)", message)
         return url[1]
 
+   # Pass the url to BS4 and read the text from the website. 
     def getUrlText(self):
         url = self.getWebsiteUrl()
         r = requests.get(url)
@@ -44,6 +57,7 @@ class emailMessage:
         url_text = soup.get_text()
         return url_text
 
+    # Get job title from website
     def getTitle(self):
         url = self.getWebsiteUrl()
         r = requests.get(url)
@@ -51,6 +65,7 @@ class emailMessage:
         self.title = soup.find('title')
         return self.title
 
+    # Parse the website of the job posting to find the specific keywords we want to find in the description.
     def parseText(self):
         text = self.getUrlText()
         title = self.getTitle()
@@ -65,10 +80,11 @@ class emailMessage:
         else:
             return None
 
+# See gmail API for the scopes explanation.  All we need is read access
 SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
 
+# Connect to our gmail API and pull out all the message ids.
 def getMessagesList(creds):
-
     service = build('gmail', 'v1', credentials=creds)
     response = service.users().messages().list(userId='me').execute()
     
@@ -78,6 +94,7 @@ def getMessagesList(creds):
         message_ids.append(message['id'])
     return message_ids
 
+# parse through all email ids in my gmail inbox, and pull it out into messages list if it is from Indeed.
 def getMessages(msg_ids, creds):
     messages = []
     for msg_id in msg_ids:
@@ -100,6 +117,8 @@ def getMessages(msg_ids, creds):
             messages.append(email)
     return messages
 
+
+# See gmail API.  This is standard way of using the pickle credentials.
 def getAuthorization(scope):
 
     creds = None
