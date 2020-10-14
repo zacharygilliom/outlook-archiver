@@ -18,7 +18,7 @@ import requests
 
 class emailMessage:
 
-''' A class for the email messages to obtain specific pieces of the emails'''
+    ''' A class for the email messages to obtain specific pieces of the emails'''
 
     def __init__(self, email_id, email_from, email_body):
         self.email_from = email_from
