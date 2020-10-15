@@ -28,41 +28,35 @@ class emailMessage:
     # Problem with the decode.  Need to fix this.
     # This will read the email body which arrives in base64 and will decode it to something we can read so we can parse it.
     def decodeEmailBody(self):
-        # TODO: Fix the encoding part... Email_body has too many characters to decode
         base64_message = self.email_body
-        print(f'Base64 Message \n{base64_message}')
-        print('Length: ' + str(len(base64_message)))
-        # base64_bytes = base64_message.encode('ascii')
-        # print(f'Base64_bytes \n{base64_bytes}')
-        base64_message += '==='
-        message_bytes = base64.b64decode(base64_message)
-        # print(f'Message_bytes \n{message_bytes}')
-        # message = message_bytes.decodebytes('ascii')
-        # print(f'decoded Message \n{message_bytes}')
-        # print(message_bytes)
-        message = message_bytes.decode('utf-8') 
+        message_str = base64.urlsafe_b64decode(base64_message.encode())
+        message = message_str.decode('utf-8') 
         return message
 
     # Parse the body of the email and grab the URL from the job description.  We will use the job URL and beautifulsoup to parse the webpage.
     def getWebsiteUrl(self):
         message = self.decodeEmailBody()
-        url = re.findall("(?P<url>https://[^\s]+)", message)
-        return url[1]
+        # url1 = re.findall("https://www.indeed.com/.*?\/clk/\s.*?", message)
+        url = re.findall("(?P<url>https://www.indeed.com/.*?\/clk/[^\s]+)", message)
+        return url
 
    # Pass the url to BS4 and read the text from the website. 
     def getUrlText(self):
-        url = self.getWebsiteUrl()
-        r = requests.get(url)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        url_text = soup.get_text()
+        urlList = self.getWebsiteUrl()
+        for url in urlList:
+            r = requests.get(url)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            url_text = soup.get_text()
         return url_text
 
     # Get job title from website
     def getTitle(self):
-        url = self.getWebsiteUrl()
-        r = requests.get(url)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        self.title = soup.find('title')
+        urlList = self.getWebsiteUrl()
+        for url in urlList:
+            r = requests.get(url)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            title = soup.find('title')
+            url_text = soup.get_text()
         return self.title
 
     # Parse the website of the job posting to find the specific keywords we want to find in the description.
@@ -72,7 +66,7 @@ class emailMessage:
         keywords = ['python', 'Python', 'Mathematics', 'Bachelor', 'entry level', 'entry-level', 'beginner']
         found_keywords = []
         for keyword in keywords:
-            if keyword in text:
+            if keyword in text.lower():
                 found_keywords.append(keyword)
         email_dict = {"Title": title, "keywords":found_keywords}
         if email_dict['keywords']:
@@ -100,7 +94,7 @@ def getMessages(msg_ids, creds):
     for msg_id in msg_ids:
         service = build('gmail', 'v1', credentials=creds)
         response = service.users().messages().get(userId='me', id=msg_id).execute()
-        print(response)
+        # print(response)
         for val in response['payload']['headers']:
             if val['name'] == 'From':
                 email_from = val['value']
@@ -123,20 +117,46 @@ def getAuthorization(scope):
 
     creds = None
 
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists('../token.pickle'):
+        with open('../token.pickle', 'rb') as token:
             creds = pickle.load(token)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', scope)
+                    '../credentials.json', scope)
             creds = flow.run_local_server(port=0)
 
-        with open('token.pickle', 'wb') as token:
+        with open('../token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     return creds
+
+def listJob(listOfUrls):
+    JobPostingsList = []
+    for urllist in listOfUrls:
+        for url in urllist:
+            r = requests.get(url)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            title = soup.find('title')
+            url_text = soup.get_text()
+            keywords = parseText(url_text)
+            JobPostings = {"Title":title, "Keywords":keywords}
+            if JobPostings["Keywords"]:
+                JobPostingsList.append(JobPostings)
+    return JobPostingsList
+
+def parseText(text):
+    keywords = ['python', 'Python', 'Mathematics', 'Bachelor', 'entry level', 'entry-level', 'beginner']
+    found_keywords = []
+    for keyword in keywords:
+        if keyword in text.lower():
+            found_keywords.append(keyword)
+    email_dict = found_keywords
+    if email_dict:
+        return email_dict
+    else:
+        return None
 
 def main():
     creds = getAuthorization(scope=SCOPES)
@@ -145,14 +165,19 @@ def main():
     # print(email_messages[0].decodeEmailBody())
     # email_messages[0].getWebsiteUrl())
     # email_messages[0].getUrlText()
-    # for mess in email_messages:
-        # print(mess.parseText())
-    # email_messages[4].parseText()
+    URLList = []
+    for mess in email_messages:
+        # print(mess.getWebsiteUrl())
+        URLList.append(mess.getWebsiteUrl())
 
+    # print(URLList)
+    res = listJob(URLList)
+    print(res)
+    
 if __name__ == '__main__':
     main()
 
-# TODO: Need to fix decoder method.
+# DONE: Need to fix decoder method.
 # Done: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
 # Done: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
 # postings
