@@ -8,12 +8,13 @@ import base64
 import re
 from bs4 import BeautifulSoup
 import requests
+from twilio.rest import Client
 
 # A quick overview of how the code works.  
 # We connect to our Gmail API and fetch all the email IDS.  We need the email IDS because we need to then pass this to the GMAIL API so we can read the emails.  Once we can read the 
 # emails, we will parse the text to find the emails from Indeed.com because these will have the job postings that we want to look at.  The job postings include the URL from which the 
 # job desciption resides. From here, we use Beatiful soup to parse the website and look in the job description to find keywords that we want.
-#TODO - Need to fix the email decoder as the base64 message is always off by a digit.
+#Done - Need to fix the email decoder as the base64 message is always off by a digit.
 #TODO - Once we find the job postings we want to look at, we need to send a text to me of the job.
 
 class emailMessage:
@@ -139,15 +140,18 @@ def listJob(listOfUrls):
             r = requests.get(url)
             soup = BeautifulSoup(r.text, 'html.parser')
             title = soup.find('title')
+            title = str(title)
+            titleLength = len(title)-20
+            titleClean = title[7:titleLength]
             url_text = soup.get_text()
             keywords = parseText(url_text)
-            JobPostings = {"Title":title, "Keywords":keywords}
+            JobPostings = {"Title":titleClean, "Keywords":keywords}
             if JobPostings["Keywords"]:
                 JobPostingsList.append(JobPostings)
     return JobPostingsList
 
 def parseText(text):
-    keywords = ['python', 'Python', 'Mathematics', 'Bachelor', 'entry level', 'entry-level', 'beginner']
+    keywords = ['python', 'Python', 'Mathematics', 'Bachelor', 'entry level', 'entry-level', 'beginner', 'Go', 'golang', 'Golang']
     found_keywords = []
     for keyword in keywords:
         if keyword in text.lower():
@@ -158,26 +162,42 @@ def parseText(text):
     else:
         return None
 
+def sendText(jobPostingsList):
+    textMessage = ""
+    for job in jobPostingsList:
+        textMessage += "\n" + job["Title"] + ":"
+        for keyword in job["Keywords"]:
+            textMessage += "--" + keyword  
+    print(textMessage)
+    account_sid = 'ACce8b10fd74495fcd45b4f350a1a7599a'
+    auth_token = 'fe7422e18bceaf1566afc8ae5f3a7a8d'
+    client = Client(account_sid, auth_token)
+    
+    message = client.messages.create(
+                         body= textMessage, 
+                         from_='+12196668102',
+                         to='+15704125384'
+                     )
+    
+    print(message.sid)
+
 def main():
     creds = getAuthorization(scope=SCOPES)
     msg_ids = getMessagesList(creds)
     email_messages = getMessages(msg_ids, creds)
-    # print(email_messages[0].decodeEmailBody())
-    # email_messages[0].getWebsiteUrl())
-    # email_messages[0].getUrlText()
     URLList = []
     for mess in email_messages:
-        # print(mess.getWebsiteUrl())
         URLList.append(mess.getWebsiteUrl())
-
-    # print(URLList)
     res = listJob(URLList)
-    print(res)
+    for r in res:
+        print(r)
+        print('\n')
     
+    # sendText(res)
 if __name__ == '__main__':
     main()
 
-# DONE: Need to fix decoder method.
+# Done: Need to fix decoder method.
 # Done: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
 # Done: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
 # postings
