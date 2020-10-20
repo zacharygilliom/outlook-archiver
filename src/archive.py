@@ -4,11 +4,13 @@ import pickle
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from googleapiclient.discovery import HttpError
 import base64
 import re
 from bs4 import BeautifulSoup
 import requests
 from twilio.rest import Client
+from email.mime.text import MIMEText
 
 # A quick overview of how the code works.  
 # We connect to our Gmail API and fetch all the email IDS.  We need the email IDS because we need to then pass this to the GMAIL API so we can read the emails.  Once we can read the 
@@ -75,8 +77,8 @@ class emailMessage:
         else:
             return None
 
-# See gmail API for the scopes explanation.  All we need is read access
-SCOPES=['https://www.googleapis.com/auth/gmail.readonly']
+# See gmail API for the scopes explanation.  We want Read and Write Access Only
+SCOPES=['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.send']
 
 # Connect to our gmail API and pull out all the message ids.
 def getMessagesList(creds):
@@ -112,6 +114,22 @@ def getMessages(msg_ids, creds):
             messages.append(email)
     return messages
 
+def createMessage(message_text):
+    message = MIMEText(message_text)
+    message['to'] = 'zacharygilliom@gmail.com' 
+    message['from'] = 'me'
+    message['subject'] = 'Viable Job Listings' 
+    print(message)
+    return {'raw':base64.urlsafe_b64encode(message.as_string())}
+
+def sendMessage(message, creds):
+    service = build('gmail', 'v1', credentials=creds)
+    try:
+        messageSent = service.users().messages().send(userId='me', body=message).execute()
+        print(f'Message Id: {message["id"]}')
+        return messageSent
+    except HttpError:
+        print(f'An Error Occurred: {error}')
 
 # See gmail API.  This is standard way of using the pickle credentials.
 def getAuthorization(scope):
@@ -145,7 +163,7 @@ def listJob(listOfUrls):
             titleClean = title[7:titleLength]
             url_text = soup.get_text()
             keywords = parseText(url_text)
-            JobPostings = {"Title":titleClean, "Keywords":keywords}
+            JobPostings = {"Title":titleClean, "Keywords":keywords, 'URL':url}
             if JobPostings["Keywords"]:
                 JobPostingsList.append(JobPostings)
     return JobPostingsList
@@ -162,24 +180,25 @@ def parseText(text):
     else:
         return None
 
-def sendText(jobPostingsList):
-    textMessage = ""
+def buildBody(jobPostingsList):
+    emailMessage = ""
     for job in jobPostingsList:
-        textMessage += "\n" + job["Title"] + ":"
+        emailMessage += "\n" + job["Title"] + ":"
         for keyword in job["Keywords"]:
-            textMessage += "--" + keyword  
-    print(textMessage)
-    account_sid = 'ACce8b10fd74495fcd45b4f350a1a7599a'
-    auth_token = 'fe7422e18bceaf1566afc8ae5f3a7a8d'
-    client = Client(account_sid, auth_token)
-    
-    message = client.messages.create(
-                         body= textMessage, 
-                         from_='+12196668102',
-                         to='+15704125384'
-                     )
-    
-    print(message.sid)
+            emailMessage += "--" + keyword  
+        emailMessage += "\n" + job['URL']
+    print(emailMessage)
+    #account_sid = 'ACce8b10fd74495fcd45b4f350a1a7599a'
+    #auth_token = 'fe7422e18bceaf1566afc8ae5f3a7a8d'
+    #client = Client(account_sid, auth_token)
+    #
+    #message = client.messages.create(
+    #                     body= textMessage, 
+    #                     from_='+12196668102',
+    #                     to='+15704125384'
+    #                 )
+    #
+    return emailMessage
 
 def main():
     creds = getAuthorization(scope=SCOPES)
@@ -189,10 +208,14 @@ def main():
     for mess in email_messages:
         URLList.append(mess.getWebsiteUrl())
     res = listJob(URLList)
-    for r in res:
-        print(r)
-        print('\n')
-    
+    # for r in res:
+    #     print(r)
+    #     print('\n')
+  
+    bodyText = buildBody(res)
+    email = createMessage(bodyText)
+    sendMessage(email, creds)
+
     # sendText(res)
 if __name__ == '__main__':
     main()
