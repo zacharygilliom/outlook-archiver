@@ -186,17 +186,6 @@ def buildBody(jobPostingsList):
         for keyword in job["Keywords"]:
             emailMessage += "--" + keyword  
         emailMessage += "\n" + job['URL']
-    print(emailMessage)
-    #account_sid = 'ACce8b10fd74495fcd45b4f350a1a7599a'
-    #auth_token = 'fe7422e18bceaf1566afc8ae5f3a7a8d'
-    #client = Client(account_sid, auth_token)
-    #
-    #message = client.messages.create(
-    #                     body= textMessage, 
-    #                     from_='+12196668102',
-    #                     to='+15704125384'
-    #                 )
-    #
     return emailMessage
 
 def main():
@@ -207,15 +196,11 @@ def main():
     for mess in email_messages:
         URLList.append(mess.getWebsiteUrl())
     res = listJob(URLList)
-    # for r in res:
-    #     print(r)
-    #     print('\n')
   
     bodyText = buildBody(res)
     email = createMessage(bodyText)
     sendMessage(email, creds)
 
-    # sendText(res)
 if __name__ == '__main__':
     main()
 
@@ -223,5 +208,5 @@ if __name__ == '__main__':
 # Done: create a function that will check the email body contents and extract the https:// link so we can scrape the data from that page.
 # Done: create a function that will scrape the webpage and search for keywords such as Python, data analysis, statistcs, ... and return those specific job 
 # postings
-# TODO: Create a function to send a text message alert to my phone notifying me of the specific jobs to apply to.
+# Done: Create a function to send a text message alert to my phone notifying me of the specific jobs to apply to.
 
