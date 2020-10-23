@@ -39,7 +39,6 @@ class emailMessage:
     # Parse the body of the email and grab the URL from the job description.  We will use the job URL and beautifulsoup to parse the webpage.
     def getWebsiteUrl(self):
         message = self.decodeEmailBody()
-        # url1 = re.findall("https://www.indeed.com/.*?\/clk/\s.*?", message)
         url = re.findall("(?P<url>https://www.indeed.com/.*?\/clk/[^\s]+)", message)
         return url
 
