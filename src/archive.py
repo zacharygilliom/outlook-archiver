@@ -117,16 +117,15 @@ def getMessages(msg_ids, creds):
 def createMessage(message_text):
     message = MIMEText(message_text)
     message['to'] = 'zacharygilliom@gmail.com' 
-    message['from'] = 'me'
+    message['from'] = 'Zach Gilliom'
     message['subject'] = 'Viable Job Listings' 
-    print(message)
-    return {'raw':base64.urlsafe_b64encode(message.as_string())}
+    raw_message = base64.urlsafe_b64encode(message.as_string().encode("utf-8"))
+    return {'raw':raw_message.decode("utf-8")}
 
 def sendMessage(message, creds):
     service = build('gmail', 'v1', credentials=creds)
     try:
         messageSent = service.users().messages().send(userId='me', body=message).execute()
-        print(f'Message Id: {message["id"]}')
         return messageSent
     except HttpError:
         print(f'An Error Occurred: {error}')
