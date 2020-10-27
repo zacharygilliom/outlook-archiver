@@ -32,7 +32,7 @@ Brlapi==0.7.0
 cffi==1.14.0
 chardet==3.0.4
 chrome-gnome-shell==0.0.0
-cryptography==2.8
+cryptography==3.2
 cupshelpers==1.0
 dasbus==0.2
 dbus-python==1.2.16
