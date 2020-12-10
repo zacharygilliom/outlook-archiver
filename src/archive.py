@@ -1,3 +1,5 @@
+#!/home/zacharygilliom/pythonProjects/gmail-archiver/.venv/bin/python3 archive.py
+
 import os
 from pathlib import Path
 import pickle
@@ -9,7 +11,6 @@ import base64
 import re
 from bs4 import BeautifulSoup
 import requests
-from twilio.rest import Client
 from email.mime.text import MIMEText
 
 # A quick overview of how the code works.  
